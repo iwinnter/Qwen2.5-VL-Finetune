@@ -16,16 +16,6 @@ This repository contains a script for training [Qwen2-VL](https://huggingface.co
 - Direct Preference Optimization (DPO)
 - Group Relative Policy Optimization (GRPO)
 
-## Docker
-
-To simplfy the setting process for training, you could use the provided pre-build environments.<br>
-The settings are done in the conda env named `train`.<br><br>
-You could find more information about the image [here](https://hub.docker.com/repository/docker/john119/vlm/general).
-
-```
-docker pull john119/vlm
-docker run --gpus all -it -v /host/path:/docker/path --name vlm --ipc=host john119/vlm /bin/bash
-```
 
 ## Installation
 
@@ -44,6 +34,13 @@ conda env create -f environment.yaml
 conda activate train
 pip install qwen-vl-utils
 pip install flash-attn --no-build-isolation
+```
+### Download Qwen2.5-VL-3B
+It is recommended to use [ModelScope](https://modelscope.cn/models/qwen/Qwen2.5-VL-3B-Instruct/) for model downloading.
+
+```bash
+pip install modelscope
+modelscope download --model qwen/Qwen2.5-VL-3B-Instruct --local_dir ./dir
 ```
 
 ## Dataset
