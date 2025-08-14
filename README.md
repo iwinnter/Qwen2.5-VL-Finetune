@@ -1,65 +1,7 @@
-# Fine-tuning Qwen2-VL Series
+# Fine-tuning Qwen2.5-VL 3B
 
 This repository contains a script for training [Qwen2-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) and [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) with only using HuggingFace and [Liger-Kernel](https://github.com/linkedin/Liger-Kernel).
 
-## Other projects
-
-**[[Phi3-Vision Finetuning]](https://github.com/2U1/Phi3-Vision-Finetune)**<br>
-**[[Llama3.2-Vision Finetuning]](https://github.com/2U1/Llama3.2-Vision-Ft)**<br>
-**[[Molmo Finetune]](https://github.com/2U1/Molmo-Finetune)**<br>
-**[[Pixtral Finetune]](https://github.com/2U1/Pixtral-Finetune)**<br>
-**[[SmolVLM Finetune]](https://github.com/2U1/SmolVLM-Finetune)**<br>
-**[[Gemma3 Finetune]](https://github.com/2U1/Gemma3-Finetune)**
-
-## Update
-
-- [2025/08/08] 🔥Monkey patch Qwen2.5-VL's window attention and forward for using less memory and speedups.
-- [2025/07/25] Updated Classification training script for experimental feature.
-- [2025/05/29] 🔥Supports GRPO training.
-- [2025/04/16] 🔥Supports DPO training.
-- [2025/03/04] Add Option for using liger kernel.
-- [2025/02/18] 🔥Supports mixed-modality dataset with zero3.
-- [2025/02/05] Fixed code for properly use image.
-- [2025/02/03] Support Liger-kernel for Qwen2.5-VL.
-- [2025/02/03] 🔥Supports Qwen2.5-VL.
-- [2025/01/24] Add option for using DoRA.
-- [2025/01/24] Fix error in LoRA training.
-- [2025/01/18] 🔥Supports mixed-modality data.
-- [2025/01/11] Updated 8-bit training with ms_amp fp8 with opt_level O3.
-- [2024/11/05] Add memory efficient 8-bit training.
-- [2024/09/12] 🔥Now the model is trained using [Liger-Kernel](https://github.com/linkedin/Liger-Kernel).
-- [2024/09/11] Supports setting different learning rates to projector and vision model.
-- [2024/09/11] 🔥Supports multi-image and video training.
-
-## Table of Contents
-
-- [Fine-tuning Qwen2-VL Series](#fine-tuning-qwen2-vl-series)
-  - [Other projects](#other-projects)
-  - [Update](#update)
-  - [Table of Contents](#table-of-contents)
-  - [Supported Features](#supported-features)
-  - [Docker](#docker)
-  - [Installation](#installation)
-    - [Environments](#environments)
-    - [Using `requirements.txt`](#using-requirementstxt)
-    - [Using `environment.yaml`](#using-environmentyaml)
-  - [Dataset Preparation](#dataset-preparation)
-  - [Supervised Fine Tuning](#supervised-fine-tuning)
-    - [Full Finetuning](#full-finetuning)
-    - [Finetune with LoRA](#finetune-with-lora)
-    - [Train with video dataset](#train-with-video-dataset)
-      - [Image Resolution for vram usage](#image-resolution-for-vram-usage)
-      - [Merge LoRA Weights](#merge-lora-weights)
-  - [DPO Finetuning](#dpo-finetuning)
-  - [GRPO Finetuning](#grpo-finetuning)
-  - [Inference](#inference)
-    - [Gradio Infernce (WebUI)](#gradio-infernce-webui)
-  - [Issue for libcudnn error](#issue-for-libcudnn-error)
-  - [TODO](#todo)
-  - [Known Issues](#known-issues)
-  - [License](#license)
-  - [Citation](#citation)
-  - [Acknowledgement](#acknowledgement)
 
 ## Supported Features
 
@@ -74,36 +16,18 @@ This repository contains a script for training [Qwen2-VL](https://huggingface.co
 - Direct Preference Optimization (DPO)
 - Group Relative Policy Optimization (GRPO)
 
-## Docker
-
-To simplfy the setting process for training, you could use the provided pre-build environments.<br>
-The settings are done in the conda env named `train`.<br><br>
-You could find more information about the image [here](https://hub.docker.com/repository/docker/john119/vlm/general).
-
-```
-docker pull john119/vlm
-docker run --gpus all -it -v /host/path:/docker/path --name vlm --ipc=host john119/vlm /bin/bash
-```
 
 ## Installation
 
-### Environments
+### 1.Environments
 
 - Ubuntu 22.04
-- Nvidia-Driver 550.120
-- Cuda version 12.4
+- Nvidia-Driver 570
+- Cuda version 12.8
 
 Install the required packages using `environment.yaml`.
 
-### Using `requirements.txt`
-
-```bash
-pip install -r requirements.txt -f https://download.pytorch.org/whl/cu124
-pip install qwen-vl-utils
-pip install flash-attn --no-build-isolation
-```
-
-### Using `environment.yaml`
+### 2.Using `environment.yaml`
 
 ```bash
 conda env create -f environment.yaml
@@ -111,59 +35,66 @@ conda activate train
 pip install qwen-vl-utils
 pip install flash-attn --no-build-isolation
 ```
+### 3.Download Qwen2.5-VL-3B
+It is recommended to use [ModelScope](https://modelscope.cn/models/qwen/Qwen2.5-VL-3B-Instruct/) for model downloading.
 
-**Note:** You should install flash-attn after installing the other packages.
+```bash
+pip install modelscope
+modelscope download --model qwen/Qwen2.5-VL-3B-Instruct 
+```
 
-## Dataset Preparation
+## Dataset
 
 The script requires a dataset formatted according to the LLaVA specification. The dataset should be a JSON file where each entry contains information about conversations and images. Ensure that the image paths in the dataset match the provided `--image_folder`.<br>
 
-**When using a multi-image dataset, the image tokens should all be `<image>`, and the image file names should have been in a list.**<br><br>
-**Please see the example below and follow format your data.**
+### 1.VQA dataset
 
-<details>
-<summary>Example for single image dataset</summary>
+Please download the annotation of the final mixture our instruction tuning data [llava_v1_5_mix665k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_v1_5_mix665k.json), and download the images from constituting datasets:
 
-```json
-[
-  {
-    "id": "000000033471",
-    "image": "000000033471.jpg",
-    "conversations": [
-      {
-        "from": "human",
-        "value": "<image>\nWhat are the colors of the bus in the image?"
-      },
-      {
-        "from": "gpt",
-        "value": "The bus in the image is white and red."
-      },
-      {
-        "from": "human",
-        "value": "What feature can be seen on the back of the bus?"
-      },
-      {
-        "from": "gpt",
-        "value": "The back of the bus features an advertisement."
-      },
-      {
-        "from": "human",
-        "value": "Is the bus driving down the street or pulled off to the side?"
-      },
-      {
-        "from": "gpt",
-        "value": "The bus is driving down the street, which is crowded with people and other vehicles."
-      }
-    ]
-  }
-  ...
-]
+- COCO: [train2017](http://images.cocodataset.org/zips/train2017.zip)
+- GQA: [images](https://downloads.cs.stanford.edu/nlp/data/gqa/images.zip)
+- OCR-VQA: [download script](https://drive.google.com/drive/folders/1_GYPY5UkUy7HIcR0zq3ZCFgeZN7BAfm_?usp=sharing), **we save all files as `.jpg`**
+- TextVQA: [train_val_images](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip)
+- VisualGenome: [part1](https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip), [part2](https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip)
+
+```
+├── coco
+│   └── train2017
+├── gqa
+│   └── images
+├── ocr_vqa
+│   └── images
+├── textvqa
+│   └── train_images
+└── vg
+    ├── VG_100K
+    └── VG_100K_2
 ```
 
-</details>
+### 2.R2R&RXR dataset
 
-<details>
-<summary>Example for multi image dataset</summary>
+We provide annotations for`r2r`, `rxr`on [Hugging Face](https://huggingface.co/datasets/a8cheng/NaVILA-Dataset).
+Please download the repo and extract the `tar.gz` files in their respective subfolders. 
+
+The data should have structure like:
+
+```graphql
+├─ R2R
+|   ├─ train
+|   |    ├─ 1
+|   |    |    ├─ frame_0.jpg 
+|   |    |    ├─ ...
+|   |    ├─ ...
+|   ├─ annotations.json
+├─ RxR
+|   ├─ train
+|   |    ├─ 1
+|   |    |    ├─ frame_0.jpg 
+|   |    |    ├─ ...
+|   |    ├─ ...
+|   ├─ annotations.json
+```
+convert to llava format as follow
 
 ```json
 [
@@ -184,89 +115,6 @@ The script requires a dataset formatted according to the LLaVA specification. Th
   ...
 ]
 ```
-
-</details>
-
-<details>
-<summary>Example for video dataset</summary>
-
-```json
-[
-  {
-    "id": "sample1",
-    "video": "sample1.mp4",
-    "conversations": [
-      {
-        "from": "human",
-        "value": "<video>\nWhat is going on in this video?"
-      },
-      {
-        "from": "gpt",
-        "value": "A man is walking down the road."
-      }
-    ]
-  }
-  ...
-]
-```
-
-</details>
-
-<details>
-<summary>Example for DPO dataet</summary>
-
-```json
-[
-  {
-    "id": "e4cd017f-3854-4019-9cc1-9dacacb5d424",
-    "image": "example_0_0.png",
-    "prompt": "<image>\nDescribe the key features of the image in great detail.",
-    "chosen": "The image features a modern, multi-colored train parked on a train track, occupying a significant portion of the scene. The train has a unique and striking design, with red, white, and blue colors, as well as yellow accents. It appears to be a high-speed train, indicating its advanced engineering and potential for fast travel.\n\nThe train is situated next to a platform, suggesting that it may be at a train station. The overall scene conveys a sense of transportation and modern technology, with the vibrant and sleek train as the main subject.",
-    "rejected": "The image features a modern, colorful train parked on a set of train tracks. The train has a striking design, with red, white, and blue colors as well as yellow accents. It appears to be a high-speed train, ready for departure.\n\nThe train spans a significant portion of the image, from the left to the right side. The train tracks can be seen clearly beneath the train, emphasizing its position on the railway line. The overall scene gives off an impression of a contemporary and efficient mode of transportation."
-  },
-  {
-    "id": "5e19e647-e5d3-4bcf-82e9-d262570743ae",
-    "image": "example_1_0.png",
-    "prompt": "<image>\nIs this bus in the USA?",
-    "chosen": "Yes, based on the image, it can be assumed that this bus is in the USA. The location of the bus cannot be accurately determined.",
-    "rejected": "No, it's not in the USA. The image does not provide specific information on where the bus is located. However, we can say that it's not in the United States."
-  }
-  ...
-]
-```
-
-</details>
-
-<details>
-<summary>Example for GRPO dataset</summary>
-
-```json
-[
-  {
-    "id": "06bc8a17-bb1c-4007-8c08-92c41e2628b2",
-    "image": "image_2.jpg",
-    "conversations": [
-      {
-        "from": "human",
-        "value": "Based on the image, which geometric method is used to determine the bearing angle, and why is it the most appropriate choice?"
-      },
-      {
-        "from": "gpt",
-        "value": "<think>Let's analyze the image step-by-step. The image shows a right-angled triangle with points B, C, and A. The angle at point B is a right angle, indicating that trigonometric functions can be applied. To find the bearing angle, we need to relate the sides of the triangle. The tangent function is suitable here because it relates the opposite side (BC) to the adjacent side (AB) in a right-angled triangle. By using the tangent function, we can calculate the angle at point A, which is the bearing angle. Therefore, the most appropriate geometric method is the use of trigonometric functions.</think>\n\n<answer>A</answer>"
-      }
-    ]
-  }
-  ...
-]
-```
-
-**Note:** You should remove all `<image>` and `<video>` tokens in your dataset. It works a bit different with other training methods.
-
-</details>
-
-<br><br>
-
-Adding the new domain-specific data on top of the general data from open-source data will enhance downstream capabilities while retaining the foundational skills. Of course, you can also choose to fine-tune solely on the new data based on your requirements.
 
 ## Supervised Fine Tuning
 
@@ -595,3 +443,8 @@ This project is based on
 - [Qwen2-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct): Awesome pretrained MLLM based on Qwen2.
 - [Liger-Kernel](https://github.com/linkedin/Liger-Kernel): Collection of Tirton kernels designed specifically for LLM training.
 - [VLM-R1](https://github.com/om-ai-lab/VLM-R1): Open-source project of Reinforcement Learning with VLMs.
+
+
+
+
+### Visual Instruction Tuning
