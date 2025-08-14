@@ -1,65 +1,7 @@
-# Fine-tuning Qwen2-VL Series
+# Fine-tuning Qwen2.5-VL 3B
 
 This repository contains a script for training [Qwen2-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) and [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) with only using HuggingFace and [Liger-Kernel](https://github.com/linkedin/Liger-Kernel).
 
-## Other projects
-
-**[[Phi3-Vision Finetuning]](https://github.com/2U1/Phi3-Vision-Finetune)**<br>
-**[[Llama3.2-Vision Finetuning]](https://github.com/2U1/Llama3.2-Vision-Ft)**<br>
-**[[Molmo Finetune]](https://github.com/2U1/Molmo-Finetune)**<br>
-**[[Pixtral Finetune]](https://github.com/2U1/Pixtral-Finetune)**<br>
-**[[SmolVLM Finetune]](https://github.com/2U1/SmolVLM-Finetune)**<br>
-**[[Gemma3 Finetune]](https://github.com/2U1/Gemma3-Finetune)**
-
-## Update
-
-- [2025/08/08] 🔥Monkey patch Qwen2.5-VL's window attention and forward for using less memory and speedups.
-- [2025/07/25] Updated Classification training script for experimental feature.
-- [2025/05/29] 🔥Supports GRPO training.
-- [2025/04/16] 🔥Supports DPO training.
-- [2025/03/04] Add Option for using liger kernel.
-- [2025/02/18] 🔥Supports mixed-modality dataset with zero3.
-- [2025/02/05] Fixed code for properly use image.
-- [2025/02/03] Support Liger-kernel for Qwen2.5-VL.
-- [2025/02/03] 🔥Supports Qwen2.5-VL.
-- [2025/01/24] Add option for using DoRA.
-- [2025/01/24] Fix error in LoRA training.
-- [2025/01/18] 🔥Supports mixed-modality data.
-- [2025/01/11] Updated 8-bit training with ms_amp fp8 with opt_level O3.
-- [2024/11/05] Add memory efficient 8-bit training.
-- [2024/09/12] 🔥Now the model is trained using [Liger-Kernel](https://github.com/linkedin/Liger-Kernel).
-- [2024/09/11] Supports setting different learning rates to projector and vision model.
-- [2024/09/11] 🔥Supports multi-image and video training.
-
-## Table of Contents
-
-- [Fine-tuning Qwen2-VL Series](#fine-tuning-qwen2-vl-series)
-  - [Other projects](#other-projects)
-  - [Update](#update)
-  - [Table of Contents](#table-of-contents)
-  - [Supported Features](#supported-features)
-  - [Docker](#docker)
-  - [Installation](#installation)
-    - [Environments](#environments)
-    - [Using `requirements.txt`](#using-requirementstxt)
-    - [Using `environment.yaml`](#using-environmentyaml)
-  - [Dataset Preparation](#dataset-preparation)
-  - [Supervised Fine Tuning](#supervised-fine-tuning)
-    - [Full Finetuning](#full-finetuning)
-    - [Finetune with LoRA](#finetune-with-lora)
-    - [Train with video dataset](#train-with-video-dataset)
-      - [Image Resolution for vram usage](#image-resolution-for-vram-usage)
-      - [Merge LoRA Weights](#merge-lora-weights)
-  - [DPO Finetuning](#dpo-finetuning)
-  - [GRPO Finetuning](#grpo-finetuning)
-  - [Inference](#inference)
-    - [Gradio Infernce (WebUI)](#gradio-infernce-webui)
-  - [Issue for libcudnn error](#issue-for-libcudnn-error)
-  - [TODO](#todo)
-  - [Known Issues](#known-issues)
-  - [License](#license)
-  - [Citation](#citation)
-  - [Acknowledgement](#acknowledgement)
 
 ## Supported Features
 
@@ -90,18 +32,10 @@ docker run --gpus all -it -v /host/path:/docker/path --name vlm --ipc=host john1
 ### Environments
 
 - Ubuntu 22.04
-- Nvidia-Driver 550.120
-- Cuda version 12.4
+- Nvidia-Driver 570
+- Cuda version 12.8
 
 Install the required packages using `environment.yaml`.
-
-### Using `requirements.txt`
-
-```bash
-pip install -r requirements.txt -f https://download.pytorch.org/whl/cu124
-pip install qwen-vl-utils
-pip install flash-attn --no-build-isolation
-```
 
 ### Using `environment.yaml`
 
@@ -112,13 +46,87 @@ pip install qwen-vl-utils
 pip install flash-attn --no-build-isolation
 ```
 
-**Note:** You should install flash-attn after installing the other packages.
-
-## Dataset Preparation
+## Dataset
 
 The script requires a dataset formatted according to the LLaVA specification. The dataset should be a JSON file where each entry contains information about conversations and images. Ensure that the image paths in the dataset match the provided `--image_folder`.<br>
 
+### VQA dataset
+
+Please download the annotation of the final mixture our instruction tuning data [llava_v1_5_mix665k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_v1_5_mix665k.json), and download the images from constituting datasets:
+
+- COCO: [train2017](http://images.cocodataset.org/zips/train2017.zip)
+- GQA: [images](https://downloads.cs.stanford.edu/nlp/data/gqa/images.zip)
+- OCR-VQA: [download script](https://drive.google.com/drive/folders/1_GYPY5UkUy7HIcR0zq3ZCFgeZN7BAfm_?usp=sharing), **we save all files as `.jpg`**
+- TextVQA: [train_val_images](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip)
+- VisualGenome: [part1](https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip), [part2](https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip)
+
+After downloading all of them, organize the data as follows in `./playground/data`,
+```
+├── coco
+│   └── train2017
+├── gqa
+│   └── images
+├── ocr_vqa
+│   └── images
+├── textvqa
+│   └── train_images
+└── vg
+    ├── VG_100K
+    └── VG_100K_2
+```
+
+  
+### R2R&RXR dataset
+
+We provide annotations for `envdrop`, `scanqa`, `r2r`, `rxr`, and `human` on [Hugging Face](https://huggingface.co/datasets/a8cheng/NaVILA-Dataset).
+Please download the repo and extract the `tar.gz` files in their respective subfolders. 
+
+The data should have structure like:
+
+```graphql
+NaVILA-Dataset
+├─ EnvDrop
+|   ├─ videos
+|   |    ├─ 1.mp4
+|   |    ├─ ...
+|   ├─ annotations.json
+├─ Human
+|   ├─ raw_frames
+|   |    ├─ Aei0GpsWNys
+|   |    |    ├─ 0001.jpg
+|   |    |    ├─ ...
+|   |    ├─ ...
+|   ├─ videos
+|   |    ├─ Aei0GpsWNys.mp4
+|   |    ├─ ...
+|   ├─ annotations.json
+|   ├─ video_ids.txt
+├─ R2R
+|   ├─ train
+|   |    ├─ 1
+|   |    |    ├─ frame_0.jpg 
+|   |    |    ├─ ...
+|   |    ├─ ...
+|   ├─ annotations.json
+├─ RxR
+|   ├─ train
+|   |    ├─ 1
+|   |    |    ├─ frame_0.jpg 
+|   |    |    ├─ ...
+|   |    ├─ ...
+|   ├─ annotations.json
+├─ ScanQA
+|   ├─ videos
+|   |    ├─ scene0760_00.mp4
+|   |    ├─ ...
+|   ├─ annotations
+|   |    ├─ ScanQA_v1.0_train_reformat.json
+|   |    ├─ ...
+```
+
+
 **When using a multi-image dataset, the image tokens should all be `<image>`, and the image file names should have been in a list.**<br><br>
+
 **Please see the example below and follow format your data.**
 
 <details>
@@ -600,29 +608,3 @@ This project is based on
 
 
 ### Visual Instruction Tuning
-
-1. Prepare data
-
-Please download the annotation of the final mixture our instruction tuning data [llava_v1_5_mix665k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_v1_5_mix665k.json), and download the images from constituting datasets:
-
-- COCO: [train2017](http://images.cocodataset.org/zips/train2017.zip)
-- GQA: [images](https://downloads.cs.stanford.edu/nlp/data/gqa/images.zip)
-- OCR-VQA: [download script](https://drive.google.com/drive/folders/1_GYPY5UkUy7HIcR0zq3ZCFgeZN7BAfm_?usp=sharing), **we save all files as `.jpg`**
-- TextVQA: [train_val_images](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip)
-- VisualGenome: [part1](https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip), [part2](https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip)
-
-After downloading all of them, organize the data as follows in `./playground/data`,
-
-```
-├── coco
-│   └── train2017
-├── gqa
-│   └── images
-├── ocr_vqa
-│   └── images
-├── textvqa
-│   └── train_images
-└── vg
-    ├── VG_100K
-    └── VG_100K_2
-```
