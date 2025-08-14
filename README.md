@@ -19,7 +19,7 @@ This repository contains a script for training [Qwen2-VL](https://huggingface.co
 
 ## Installation
 
-### Environments
+### 1.Environments
 
 - Ubuntu 22.04
 - Nvidia-Driver 570
@@ -27,7 +27,7 @@ This repository contains a script for training [Qwen2-VL](https://huggingface.co
 
 Install the required packages using `environment.yaml`.
 
-### Using `environment.yaml`
+### 2.Using `environment.yaml`
 
 ```bash
 conda env create -f environment.yaml
@@ -35,19 +35,19 @@ conda activate train
 pip install qwen-vl-utils
 pip install flash-attn --no-build-isolation
 ```
-### Download Qwen2.5-VL-3B
+### 3.Download Qwen2.5-VL-3B
 It is recommended to use [ModelScope](https://modelscope.cn/models/qwen/Qwen2.5-VL-3B-Instruct/) for model downloading.
 
 ```bash
 pip install modelscope
-modelscope download --model qwen/Qwen2.5-VL-3B-Instruct --local_dir ./dir
+modelscope download --model qwen/Qwen2.5-VL-3B-Instruct 
 ```
 
 ## Dataset
 
 The script requires a dataset formatted according to the LLaVA specification. The dataset should be a JSON file where each entry contains information about conversations and images. Ensure that the image paths in the dataset match the provided `--image_folder`.<br>
 
-### VQA dataset
+### 1.VQA dataset
 
 Please download the annotation of the final mixture our instruction tuning data [llava_v1_5_mix665k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_v1_5_mix665k.json), and download the images from constituting datasets:
 
@@ -57,7 +57,6 @@ Please download the annotation of the final mixture our instruction tuning data 
 - TextVQA: [train_val_images](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip)
 - VisualGenome: [part1](https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip), [part2](https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip)
 
-After downloading all of them, organize the data as follows in `./playground/data`,
 ```
 ├── coco
 │   └── train2017
@@ -72,32 +71,14 @@ After downloading all of them, organize the data as follows in `./playground/dat
     └── VG_100K_2
 ```
 
-  
-### R2R&RXR dataset
+### 2.R2R&RXR dataset
 
-We provide annotations for `envdrop`, `scanqa`, `r2r`, `rxr`, and `human` on [Hugging Face](https://huggingface.co/datasets/a8cheng/NaVILA-Dataset).
+We provide annotations for`r2r`, `rxr`on [Hugging Face](https://huggingface.co/datasets/a8cheng/NaVILA-Dataset).
 Please download the repo and extract the `tar.gz` files in their respective subfolders. 
 
 The data should have structure like:
 
 ```graphql
-NaVILA-Dataset
-├─ EnvDrop
-|   ├─ videos
-|   |    ├─ 1.mp4
-|   |    ├─ ...
-|   ├─ annotations.json
-├─ Human
-|   ├─ raw_frames
-|   |    ├─ Aei0GpsWNys
-|   |    |    ├─ 0001.jpg
-|   |    |    ├─ ...
-|   |    ├─ ...
-|   ├─ videos
-|   |    ├─ Aei0GpsWNys.mp4
-|   |    ├─ ...
-|   ├─ annotations.json
-|   ├─ video_ids.txt
 ├─ R2R
 |   ├─ train
 |   |    ├─ 1
@@ -112,63 +93,8 @@ NaVILA-Dataset
 |   |    |    ├─ ...
 |   |    ├─ ...
 |   ├─ annotations.json
-├─ ScanQA
-|   ├─ videos
-|   |    ├─ scene0760_00.mp4
-|   |    ├─ ...
-|   ├─ annotations
-|   |    ├─ ScanQA_v1.0_train_reformat.json
-|   |    ├─ ...
 ```
-
-
-**When using a multi-image dataset, the image tokens should all be `<image>`, and the image file names should have been in a list.**<br><br>
-
-**Please see the example below and follow format your data.**
-
-<details>
-<summary>Example for single image dataset</summary>
-
-```json
-[
-  {
-    "id": "000000033471",
-    "image": "000000033471.jpg",
-    "conversations": [
-      {
-        "from": "human",
-        "value": "<image>\nWhat are the colors of the bus in the image?"
-      },
-      {
-        "from": "gpt",
-        "value": "The bus in the image is white and red."
-      },
-      {
-        "from": "human",
-        "value": "What feature can be seen on the back of the bus?"
-      },
-      {
-        "from": "gpt",
-        "value": "The back of the bus features an advertisement."
-      },
-      {
-        "from": "human",
-        "value": "Is the bus driving down the street or pulled off to the side?"
-      },
-      {
-        "from": "gpt",
-        "value": "The bus is driving down the street, which is crowded with people and other vehicles."
-      }
-    ]
-  }
-  ...
-]
-```
-
-</details>
-
-<details>
-<summary>Example for multi image dataset</summary>
+convert to llava format as follow
 
 ```json
 [
@@ -189,89 +115,6 @@ NaVILA-Dataset
   ...
 ]
 ```
-
-</details>
-
-<details>
-<summary>Example for video dataset</summary>
-
-```json
-[
-  {
-    "id": "sample1",
-    "video": "sample1.mp4",
-    "conversations": [
-      {
-        "from": "human",
-        "value": "<video>\nWhat is going on in this video?"
-      },
-      {
-        "from": "gpt",
-        "value": "A man is walking down the road."
-      }
-    ]
-  }
-  ...
-]
-```
-
-</details>
-
-<details>
-<summary>Example for DPO dataet</summary>
-
-```json
-[
-  {
-    "id": "e4cd017f-3854-4019-9cc1-9dacacb5d424",
-    "image": "example_0_0.png",
-    "prompt": "<image>\nDescribe the key features of the image in great detail.",
-    "chosen": "The image features a modern, multi-colored train parked on a train track, occupying a significant portion of the scene. The train has a unique and striking design, with red, white, and blue colors, as well as yellow accents. It appears to be a high-speed train, indicating its advanced engineering and potential for fast travel.\n\nThe train is situated next to a platform, suggesting that it may be at a train station. The overall scene conveys a sense of transportation and modern technology, with the vibrant and sleek train as the main subject.",
-    "rejected": "The image features a modern, colorful train parked on a set of train tracks. The train has a striking design, with red, white, and blue colors as well as yellow accents. It appears to be a high-speed train, ready for departure.\n\nThe train spans a significant portion of the image, from the left to the right side. The train tracks can be seen clearly beneath the train, emphasizing its position on the railway line. The overall scene gives off an impression of a contemporary and efficient mode of transportation."
-  },
-  {
-    "id": "5e19e647-e5d3-4bcf-82e9-d262570743ae",
-    "image": "example_1_0.png",
-    "prompt": "<image>\nIs this bus in the USA?",
-    "chosen": "Yes, based on the image, it can be assumed that this bus is in the USA. The location of the bus cannot be accurately determined.",
-    "rejected": "No, it's not in the USA. The image does not provide specific information on where the bus is located. However, we can say that it's not in the United States."
-  }
-  ...
-]
-```
-
-</details>
-
-<details>
-<summary>Example for GRPO dataset</summary>
-
-```json
-[
-  {
-    "id": "06bc8a17-bb1c-4007-8c08-92c41e2628b2",
-    "image": "image_2.jpg",
-    "conversations": [
-      {
-        "from": "human",
-        "value": "Based on the image, which geometric method is used to determine the bearing angle, and why is it the most appropriate choice?"
-      },
-      {
-        "from": "gpt",
-        "value": "<think>Let's analyze the image step-by-step. The image shows a right-angled triangle with points B, C, and A. The angle at point B is a right angle, indicating that trigonometric functions can be applied. To find the bearing angle, we need to relate the sides of the triangle. The tangent function is suitable here because it relates the opposite side (BC) to the adjacent side (AB) in a right-angled triangle. By using the tangent function, we can calculate the angle at point A, which is the bearing angle. Therefore, the most appropriate geometric method is the use of trigonometric functions.</think>\n\n<answer>A</answer>"
-      }
-    ]
-  }
-  ...
-]
-```
-
-**Note:** You should remove all `<image>` and `<video>` tokens in your dataset. It works a bit different with other training methods.
-
-</details>
-
-<br><br>
-
-Adding the new domain-specific data on top of the general data from open-source data will enhance downstream capabilities while retaining the foundational skills. Of course, you can also choose to fine-tune solely on the new data based on your requirements.
 
 ## Supervised Fine Tuning
 
