@@ -3,9 +3,9 @@ import os
 from typing import List, Dict, Any
 
 def convert_r2r_to_llava_full(
-    annotations_file: str = "/home/liu/datasets/R2R/annotations.json", 
-    train_dir: str = "/home/liu/datasets/R2R/train", 
-    output_file: str = "/home/liu/datasets/R2R/annotations_llava.json"
+    annotations_file: str = "/home/liu/datasets/RxR/annotations.json", 
+    train_dir: str = "/home/liu/datasets/RxR/train", 
+    output_file: str = "/home/liu/datasets/RxR/annotations_llava_RxR.json"
 ) -> None:
     """
     将R2R数据集完整转换为LLaVA格式，保留所有帧
