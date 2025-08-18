@@ -1,20 +1,6 @@
 # Fine-tuning Qwen2.5-VL 3B
 
-This repository contains a script for training [Qwen2-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) and [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) with only using HuggingFace and [Liger-Kernel](https://github.com/linkedin/Liger-Kernel).
-
-
-## Supported Features
-
-- Deepspeed
-- LoRA/QLoRA
-- Full-finetuning
-- Enable finetuning `vision_model` while using LoRA.
-- Disable/enable Flash Attention 2
-- Multi-image and video training
-- Training optimized with liger kernel
-- Mixed-modality dataset
-- Direct Preference Optimization (DPO)
-- Group Relative Policy Optimization (GRPO)
+This repository contains a script for training [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) with only using HuggingFace and [Liger-Kernel](https://github.com/linkedin/Liger-Kernel).
 
 
 ## Installation
@@ -35,43 +21,12 @@ conda activate train
 pip install qwen-vl-utils
 pip install flash-attn --no-build-isolation
 ```
-### 3.Download Qwen2.5-VL-3B
-It is recommended to use [ModelScope](https://modelscope.cn/models/qwen/Qwen2.5-VL-3B-Instruct/) for model downloading.
-
-```bash
-pip install modelscope
-modelscope download --model qwen/Qwen2.5-VL-3B-Instruct 
-```
 
 ## Dataset
 
 The script requires a dataset formatted according to the LLaVA specification. The dataset should be a JSON file where each entry contains information about conversations and images. Ensure that the image paths in the dataset match the provided `--image_folder`.<br>
 
-### 1.VQA dataset
-
-Please download the annotation of the final mixture our instruction tuning data [llava_v1_5_mix665k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_v1_5_mix665k.json), and download the images from constituting datasets:
-
-- COCO: [train2017](http://images.cocodataset.org/zips/train2017.zip)
-- GQA: [images](https://downloads.cs.stanford.edu/nlp/data/gqa/images.zip)
-- OCR-VQA: [download script](https://drive.google.com/drive/folders/1_GYPY5UkUy7HIcR0zq3ZCFgeZN7BAfm_?usp=sharing), **we save all files as `.jpg`**
-- TextVQA: [train_val_images](https://dl.fbaipublicfiles.com/textvqa/images/train_val_images.zip)
-- VisualGenome: [part1](https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip), [part2](https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip)
-
-```
-├── coco
-│   └── train2017
-├── gqa
-│   └── images
-├── ocr_vqa
-│   └── images
-├── textvqa
-│   └── train_images
-└── vg
-    ├── VG_100K
-    └── VG_100K_2
-```
-
-### 2.R2R&RXR dataset
+### R2R&RXR dataset
 
 We provide annotations for`r2r`, `rxr`on [Hugging Face](https://huggingface.co/datasets/a8cheng/NaVILA-Dataset).
 Please download the repo and extract the `tar.gz` files in their respective subfolders. 
