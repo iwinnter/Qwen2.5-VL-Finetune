@@ -28,12 +28,12 @@ deepspeed src/train/train_sft.py \
     --num_lora_modules -1 \
     --deepspeed scripts/zero2.json \
     --model_id $MODEL_NAME \
-    --data_path /path/to/your/training/data.json \
-    --image_folder /path/to/your/image/folder \
-    --remove_unused_columns False \
-    --freeze_vision_tower False  \
-    --freeze_llm False \
-    --freeze_merger False \
+    --data_path /gz-data/R2R/annotations_llava_r2r.json \
+    --image_folder /gz-data/R2R/train \
+    --remove_unused_columns True \
+    --freeze_vision_tower True \
+    --freeze_llm True \
+    --freeze_merger True \
     --bf16 True \
     --fp16 False \
     --disable_flash_attn2 False \
