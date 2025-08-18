@@ -36,7 +36,7 @@ deepspeed src/train/train_sft.py \
     --freeze_merger True \
     --bf16 True \
     --fp16 False \
-    --disable_flash_attn2 False \
+    --disable_flash_attn2 True \
     --output_dir output/lora_vision_test \
     --num_train_epochs 1 \
     --per_device_train_batch_size $BATCH_PER_DEVICE \
