@@ -115,9 +115,9 @@ def main():
     主函数：执行完整的修改流程
     """
     # 设置文件路径
-    json_file_path = "/home/liu/datasets/RxR/annotations_llava_rxr.json"
-    output_json_path = "/home/liu/datasets/RxR/annotations_llava_rxr_modified.json"
-    train_dir_path = "/home/liu/datasets/RxR/train"
+    json_file_path = "/home/liu/dataset/RxR_test/annotations_rxr_24point_test.json"
+    output_json_path = "/home/liu/dataset/RxR_test/annotations_llava_rxr_modified24.json"
+    train_dir_path = "/home/liu/dataset/RxR_test/test"
     
     print("开始修改RxR数据集...")
     print("=" * 50)
@@ -178,4 +178,4 @@ if __name__ == "__main__":
     
     # 验证修改结果
     print("\n" + "=" * 50)
-    verify_changes("/home/liu/datasets/RxR/annotations_llava_rxr_modified.json", "/home/liu/datasets/RxR/train")
+    verify_changes("/home/liu/dataset/RxR_test/annotations_llava_rxr_modified.json", "/home/liu/datasets/RxR/train")

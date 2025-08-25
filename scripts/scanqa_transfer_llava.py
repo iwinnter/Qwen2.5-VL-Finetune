@@ -340,9 +340,9 @@ def verify_scanqa_conversion(output_file: str, num_samples: int = 3) -> None:
 if __name__ == "__main__":
     # 基本转换
     convert_scanqa_to_llava_video(
-        annotations_file="/home/liu/datasets/ScanQA/ScanQA_merged.json",
-        video_dir="/home/liu/datasets/ScanQA/videos",
-        output_file="/home/liu/datasets/ScanQA/annotations_llava_scanqa.json"
+        annotations_file="/home/liu/dataset/ScanQA/ScanQA_test.json",
+        video_dir="/home/liu/dataset/ScanQA/videos",
+        output_file="/home/liu/dataset/ScanQA/annotations_llava_scanqa_test.json"
     )
 
     

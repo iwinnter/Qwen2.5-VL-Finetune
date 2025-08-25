@@ -107,15 +107,16 @@ def main():
     主函数
     """
     # 定义要合并的文件列表
-    base_dir = "/home/liu/datasets"
+    base_dir = "/home/liu/dataset"
     file_list = [
-        "R2R/annotations_llava_r2r.json",
-        "RxR/annotations_llava_rxr.json",
+        "testallrxr/annotations_llava_rxr_modified24.json",
+        "All_test/annotations_r2r_24point_test.json",
+
     ]
     
     # 构建完整路径
     file_paths = [os.path.join(base_dir, filename) for filename in file_list]
-    output_path = os.path.join(base_dir, "ScanQA_v1.0_merged.json")
+    output_path = os.path.join(base_dir, "annotations_alltest_24point.json")
     
     print("ScanQA JSON文件合并工具")
     print("=" * 60)
