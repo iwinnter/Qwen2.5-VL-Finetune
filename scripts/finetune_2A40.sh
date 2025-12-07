@@ -1,15 +1,14 @@
 #!/bin/bash
 
-# You can use 2B instead of 7B
-#MODEL_NAME="Qwen/Qwen2-VL-7B-Instruct"
+
+# MODEL_NAME="Qwen/Qwen2-VL-7B-Instruct"
 # MODEL_NAME="Qwen/Qwen2-VL-2B-Instruct"
- MODEL_NAME="Qwen/Qwen2.5-VL-3B-Instruct"
-# MODEL_NAME="/gz-data/qwen"
+MODEL_NAME="Qwen/Qwen2.5-VL-3B-Instruct"
 # MODEL_NAME="Qwen/Qwen2.5-VL-7B-Instruct"
 
 export PYTHONPATH=src:$PYTHONPATH
 
-GLOBAL_BATCH_SIZE=32
+GLOBAL_BATCH_SIZE=8
 BATCH_PER_DEVICE=1
 NUM_DEVICES=2
 GRAD_ACCUM_STEPS=$((GLOBAL_BATCH_SIZE / (BATCH_PER_DEVICE * NUM_DEVICES)))
@@ -17,20 +16,22 @@ GRAD_ACCUM_STEPS=$((GLOBAL_BATCH_SIZE / (BATCH_PER_DEVICE * NUM_DEVICES)))
 # If you want to tune the `embed_token` with LoRA, You need to tune `lm_head` together
 # You should freeze the the merger also, becuase the merger is included in the vision_tower.
 
+# Please set the gradient_checkpointing to False when you are using LoRA with vision models.
+
 deepspeed src/train/train_sft.py \
     --use_liger True \
     --lora_enable True \
-    --vision_lora False \
+    --vision_lora True \
     --use_dora False \
-    --lora_namespan_exclude "['lm_head', 'embed_tokens']" \
-    --lora_rank 16 \
-    --lora_alpha 16 \
+    --lora_namespan_exclude "['lm_head', 'embed_tokens','language_model', 'llm', 'model.model']" \
+    --lora_rank 32 \
+    --lora_alpha 64 \
     --lora_dropout 0.05 \
     --num_lora_modules -1 \
     --deepspeed scripts/zero3.json \
     --model_id $MODEL_NAME \
-    --data_path /gz-data/annotations_r2r_8point.json \
-    --image_folder /gz-data/R2R/train \
+    --data_path /root/autodl-tmp/R2R/r2r_8point_sampled13177.json \
+    --image_folder /root/autodl-tmp/R2R/train \
     --remove_unused_columns False \
     --freeze_vision_tower True \
     --freeze_llm True \
@@ -39,21 +40,21 @@ deepspeed src/train/train_sft.py \
     --fp16 False \
     --disable_flash_attn2 False \
     --output_dir output/lora_vision_test \
-    --num_train_epochs 2 \
+    --num_train_epochs 1 \
     --per_device_train_batch_size $BATCH_PER_DEVICE \
     --gradient_accumulation_steps $GRAD_ACCUM_STEPS \
-    --image_min_pixels $((256 * 28 * 28)) \
-    --image_max_pixels $((640* 28 * 28)) \
+    --image_min_pixels $((128 * 28 * 28)) \
+    --image_max_pixels $((256 * 28 * 28)) \
     --learning_rate 2e-4 \
     --weight_decay 0.1 \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
     --logging_steps 1 \
     --tf32 True \
-    --gradient_checkpointing True \
+    --gradient_checkpointing False \
     --report_to tensorboard \
     --lazy_preprocess True \
     --save_strategy "steps" \
-    --save_steps 200 \
+    --save_steps 1000 \
     --save_total_limit 10 \
     --dataloader_num_workers 4
